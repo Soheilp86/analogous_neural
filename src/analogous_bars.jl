@@ -69,7 +69,7 @@ export
     convert_classrep,
     save_classreps,
     vector_to_symmetric_matrix
-plotly()
+gr()
 
 #############################################################################################
 # MAIN FUNCTION 
@@ -3944,7 +3944,7 @@ end
 # ------------------------------------------------------------------------------------------------------------
 function plot_PD(barcode; 
         highlight = [], highlight_color = :deeppink2, cutoff = nothing, 
-        pd_min = nothing, pd_max = nothing, threshold_lw = 5, diagonal_lw = 5,
+        pd_min = nothing, pd_max = nothing, threshold_lw = 3, diagonal_lw = 3,
         kwargs...)
     points = barcode
     
@@ -4005,62 +4005,68 @@ function plot_PD(barcode;
     
      # if highlight is provided, color specific points with the given color
     if highlight != []
-         scatter!(points[highlight,1], points[highlight,2]; kwargs..., color = highlight_color, labels = "", hover = highlight)
+         scatter!(points[highlight,1], points[highlight,2]; kwargs..., color = highlight_color, labels = "", #hover = highlight
+        )
     end
     
     # plot the cutoff (dotted line) if provided
     if cutoff != nothing
         f(x) = x + cutoff
-        plot!(f, linestyle = :dash, c = "black", label = "", hover = false, linewidth = threshold_lw)
+        plot!(f, linestyle = :dash, c = "black", label = "", #hover = false, 
+            linewidth = threshold_lw)
     end
     
     return p
 end
 
-function plot_PD_old(barcode; highlight = [], highlight_color = :deeppink2, cutoff = nothing, kwargs...)
-    points = barcode
+# function plot_PD_old(barcode; highlight = [], highlight_color = :deeppink2, cutoff = nothing, kwargs...)
+#     points = barcode
     
-    # find index of points with death parameter == death
-    idx = findall(x -> x == Inf, points[:,2])
+#     # find index of points with death parameter == death
+#     idx = findall(x -> x == Inf, points[:,2])
     
-    # plot points with death < Inf
-    idx2 = [i for i in 1:size(points,1) if i ∉ idx]
-    p = scatter(points[idx2,1], points[idx2,2]; 
-                kwargs..., 
-                color = "grey", 
-                labels = "", 
-                alpha = 0.5, 
-                hover = idx2,
-                framestyle = :box)
+#     # plot points with death < Inf
+#     idx2 = [i for i in 1:size(points,1) if i ∉ idx]
+#     p = scatter(points[idx2,1], points[idx2,2]; 
+#                 kwargs..., 
+#                 color = "grey", 
+#                 labels = "", 
+#                 alpha = 0.5, 
+#                 hover = idx2,
+#                 framestyle = :box)
 
-    # find max death value
-    max_death = maximum(points[idx2, 2])
+#     # find max death value
+#     max_death = maximum(points[idx2, 2])
     
-    # plot points with death parameter == Inf
-    death_plot = ones(size(idx,1)) * max_death
-    min_vals = minimum(barcode[:,1]) * 0.9
-    max_vals = max_death * 1.1
-    scatter!(p, points[idx,1], death_plot, aspect_ratio = :equal, legend=:bottomright, labels="", color ="red", hover = idx; kwargs...)
+#     # plot points with death parameter == Inf
+#     death_plot = ones(size(idx,1)) * max_death
+#     min_vals = minimum(barcode[:,1]) * 0.9
+#     max_vals = max_death * 1.1
+#     scatter!(p, points[idx,1], death_plot, aspect_ratio = :equal, legend=:bottomright, labels="", color ="red", #hover = idx
+#         ; kwargs...)
 
-    # if highlight is provided, color specific points with the given color
-    if highlight != []
-         scatter!(points[highlight,1], points[highlight,2]; kwargs..., color = highlight_color, labels = "", hover = highlight)
-    end
+#     # if highlight is provided, color specific points with the given color
+#     if highlight != []
+#          scatter!(points[highlight,1], points[highlight,2]; kwargs..., color = highlight_color, labels = "", #hover = highlight
+#         )
+#     end
     
-    # plot diagonal line
-    g(x) = x
-    plot!(g, c= "black",
-        xlims = (min_vals, max_vals), ylims = (min_vals, max_vals), label = ""; kwargs..., hover = false)
+#     # plot diagonal line
+#     g(x) = x
+#     plot!(g, c= "black",
+#         xlims = (min_vals, max_vals), ylims = (min_vals, max_vals), label = ""; kwargs..., #hover = false
+#         )
     
-    # plot the cutoff (dotted line) if provided
-    if cutoff != nothing
-        f(x) = x + cutoff
-        plot!(f, linestyle = :dash, c = "black", label = "", hover = false)
-    end
+#     # plot the cutoff (dotted line) if provided
+#     if cutoff != nothing
+#         f(x) = x + cutoff
+#         plot!(f, linestyle = :dash, c = "black", label = "", #hover = false
+#         )
+#     end
     
 
-    return p
-end
+#     return p
+# end
 
 
 """
