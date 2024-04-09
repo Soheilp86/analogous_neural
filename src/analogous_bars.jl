@@ -19,7 +19,7 @@ using Plots.PlotMeasures
 using Random
 using Statistics
 using StatsBase
-using LaTeXStrings
+#using LaTeXStrings
 using Printf
 export 
     compute_Witness_persistence,

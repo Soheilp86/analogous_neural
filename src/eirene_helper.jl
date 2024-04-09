@@ -1,7 +1,9 @@
 module eirene_helper
 
+include("Eirene_var.jl")
+
 using HDF5
-using Eirene
+using .Eirene_var
 export find_single_connected_cycle,
     convert_classrep,
     save_classreps,
