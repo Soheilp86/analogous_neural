@@ -43,7 +43,7 @@ using Pkg
 using Distances
 using FileIO
 using Blink
-using PlotlyJS
+#using PlotlyJS
 using MultivariateStats
 using Colors
 using SparseArrays
@@ -52,7 +52,7 @@ using Dates
 using Statistics
 using DelimitedFiles
 using CSV
-using Hungarian #added for the Wasserstein distances
+#using Hungarian #added for the Wasserstein distances
 
 ##########################################################################################
 
