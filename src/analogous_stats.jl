@@ -193,7 +193,7 @@ function compute_analogous_bars_null_model(;
     #W_idx, W_cutoff = select_persistent_intervals_IQR(barcode_W_PT_QT)
 
     # Dowker duality: Find the correspondence between bars
-    PT_to_QT = ext_var.apply_Dowker(W_PT_QT, W_QT_PT, dim = 1)
+    PT_to_QT = analogous_bars.apply_Dowker(W_PT_QT, W_QT_PT, dim = 1)
     
     
     # find similarity-centric analogous bars for each significant point in the Witness PD
@@ -204,12 +204,12 @@ function compute_analogous_bars_null_model(;
         W_QP_bar = PT_to_QT[W_PQ_bar]
 
         # find cycle, psi in W_P and W_Q
-        cycle_W_P, psi_W_P =  ext_var.find_terminal_class_in_W(W_PT_QT, bar = W_PQ_bar)
-        cycle_W_Q, psi_W_Q =  ext_var.find_terminal_class_in_W(W_QT_PT, bar = W_QP_bar)
+        cycle_W_P, psi_W_P =  analogous_bars.find_terminal_class_in_W(W_PT_QT, bar = W_PQ_bar)
+        cycle_W_Q, psi_W_Q =  analogous_bars.find_terminal_class_in_W(W_QT_PT, bar = W_QP_bar)
 
         # Run baseline extensions at epsilon 0
-        extension_P = ext_var.run_baseline_extension_W_to_VR_at_epsilon0(W = W_PT_QT, tau = cycle_W_P, psi = psi_W_P, C_VR = VR_P, D_VR = D_P)
-        extension_Q = ext_var.run_baseline_extension_W_to_VR_at_epsilon0(W = W_QT_PT, tau = cycle_W_Q, psi = psi_W_Q, C_VR = VR_Q, D_VR = D_Q)
+        extension_P = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_PT_QT, tau = cycle_W_P, psi = psi_W_P, C_VR = VR_P, D_VR = D_P)
+        extension_Q = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_QT_PT, tau = cycle_W_Q, psi = psi_W_Q, C_VR = VR_Q, D_VR = D_Q)
 
         # update analogous pairs
         if extension_P != nothing
