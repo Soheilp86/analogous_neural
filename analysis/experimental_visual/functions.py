@@ -503,7 +503,7 @@ def limited_xcorr_V1_AL(raster_1, neurons_idx_1, raster_2, neurons_idx_2, stimul
     distance = 1-similarity_scaled
     np.fill_diagonal(distance,0)
 
-    return similarity_scaled, distance
+    return np.ceil(np.max(similarity)), similarity_scaled, distance
 
 #=========================================================================
 # Average STD
