@@ -31,6 +31,7 @@ export
     run_extension_VR_to_W,
     run_lazy_extension_VR,
     run_similarity_analogous,
+    run_similarity_analogous_birthtime,
     find_Dowker_cycle_correspondence,
     find_CE_BE, 
     find_CE_BE_at_param,
@@ -572,6 +573,114 @@ function run_similarity_analogous(;
         
     # extension in VR(Q)
     extension_to_VR_Q = run_extension_W_to_VR_bar(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
+    
+    return extension_to_VR_P, extension_to_VR_Q
+end
+
+
+#############################################################################################
+# FUNCTIONS FOR RUNNING SIMILARITY-CENTRIC ANALOGOUS BARS AT BIRTHTIME OF WITNESS CYCLE
+#############################################################################################
+
+
+function find_classrep_in_W(
+    W::Dict; # dictionary output of "compute_Witness_persistence" 
+    bar::Int64 = 0,
+    dim = 1)
+    
+    C_W = W["eirene_output"]
+    D = W["distance_matrix"]
+    W_index2simplex = W["index2simplex"]
+    W_vertex_to_default_vertex = W["W_vertex_to_default_vertex"]
+    
+    # find class rep of bar
+    rep = classrep(C_W, class = bar, dim = dim)
+    
+    # express as a collection of simplices
+    tau = [W_index2simplex[(item, dim)] for item in rep]
+        
+    if W_vertex_to_default_vertex != nothing
+        tau = [[W_vertex_to_default_vertex[item] for item in simplex] for simplex in tau]
+    end
+    
+    return tau
+end
+
+function run_extension_W_to_VR_bar_birthtime(;
+    W::Dict{Any, Any} = Dict{Any, Any}(),
+    W_bar::Int64 = 0,
+    C_VR::Dict{String, Any} = Dict{String, Any}(),
+    D_VR::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    dim::Int64 = 1)
+    
+    # find class rep "tau" of Witness filtration
+    tau = find_classrep_in_W(W, bar = W_bar, dim = dim)
+
+    # find the birth time of the selected bar in the Witness barcode
+    W_barcode = barcode(W["eirene_output"], dim = dim)
+    birth_param = W_barcode[W_bar,1]
+    
+    # run extension method from W to VR
+    extension = run_extension_W_to_VR(W = W, 
+                                      W_cycle = tau, 
+                                      psi = birth_param, 
+                                      C_VR = C_VR, 
+                                      D_VR = D_VR, 
+                                      dim = dim)
+    
+    # add key to 'extension' dic
+    extension["selected_bar"] = W_bar
+    return extension
+end
+
+"""
+Modified version of `run_similarity_analogous`. 
+Uses the birthtime of the Witness cycle. 
+"""
+function run_similarity_analogous_birthtime(;
+    VR_P::Dict{String, Any} = Dict{String, Any}(),
+    D_P::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    VR_Q::Dict{String, Any} = Dict{String, Any}(),
+    D_Q::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    W_PQ::Dict{Any, Any} = Dict{Any, Any}(),
+    W_PQ_bar::Int64 = 0,
+    dim::Int64 = 1)
+
+     ##### check input #####
+    if VR_P == Dict()
+        throw(UndefKeywordError(:VR_P))
+    end
+    if VR_Q == Dict()
+        throw(UndefKeywordError(:VR_Q))
+    end
+    if W_PQ == Dict()
+        throw(UndefKeywordError(:W_PQ))
+    end
+    if D_P == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_P))
+    end
+    if D_Q == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_Q))
+    end
+    if W_PQ_bar == 0
+        throw(UndefKeywordError(:W_PQ_class))
+    end
+
+    ##### apply the extension method between W(P,Q) and VR(P) #####
+    extension_to_VR_P = run_extension_W_to_VR_bar_birthtime(W = W_PQ, W_bar = W_PQ_bar, C_VR = VR_P, D_VR = D_P, dim = dim)
+
+    ##### apply the extension method between W(Q,P) and VR(Q) #####
+    # get W(Q,P) info
+    D_P_Q = W_PQ["distance_matrix"]
+    D_Q_P = collect(transpose(D_P_Q))
+    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1)
+    
+    # find the bar in W(Q,P) that corresponds to W_PQ_bar
+    P_to_Q = analogous_bars.apply_Dowker(W_PQ, W_QP, dim = dim)
+    W_QP_bar = P_to_Q[W_PQ_bar]
+        
+    # extension in VR(Q)
+    extension_to_VR_Q = run_extension_W_to_VR_bar_birthtime(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
     
     return extension_to_VR_P, extension_to_VR_Q
 end
