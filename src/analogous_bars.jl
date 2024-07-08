@@ -32,6 +32,7 @@ export
     run_lazy_extension_VR,
     run_similarity_analogous,
     run_similarity_analogous_birthtime,
+    run_similarity_analogous_birthtime_fast,
     find_Dowker_cycle_correspondence,
     find_CE_BE, 
     find_CE_BE_at_param,
@@ -57,6 +58,7 @@ export
     select_persistent_intervals_IQR,
     get_multiclass_cyclerep,
     get_Witness_cyclerep,
+    get_cyclerep_Eirene,
     find_all_homology_classes,
     plot_cycle_single_square_torus,
     run_cycle_extension_VR_to_VR,
@@ -306,7 +308,7 @@ function run_extension_W_to_VR(;
     
     # find epsilon_0, Fbar_representation_tau
     
-    epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau_WtoVR(W_cycle, C_aux, Wpsi_default_vertex_simplex2index)
+    epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau_WtoVR_large_limit(W_cycle, C_aux, Wpsi_default_vertex_simplex2index)
     
     # find p_Y and BARS_short
     #max_pY = maximum(barcode(C_VR, dim = dim)[:,2])
@@ -681,6 +683,63 @@ function run_similarity_analogous_birthtime(;
         
     # extension in VR(Q)
     extension_to_VR_Q = run_extension_W_to_VR_bar_birthtime(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
+    
+    return extension_to_VR_P, extension_to_VR_Q
+end
+
+```
+Variation of the function `run_similarity_analogous_birthtime`.
+Build the Witness complex only upto the birth time of the bar we are interested in. 
+```
+function run_similarity_analogous_birthtime_fast(;
+    VR_P::Dict{String, Any} = Dict{String, Any}(),
+    D_P::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    VR_Q::Dict{String, Any} = Dict{String, Any}(),
+    D_Q::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    W_PQ::Dict{Any, Any} = Dict{Any, Any}(),
+    W_PQ_bar::Int64 = 0,
+    dim::Int64 = 1)
+
+     ##### check input #####
+    if VR_P == Dict()
+        throw(UndefKeywordError(:VR_P))
+    end
+    if VR_Q == Dict()
+        throw(UndefKeywordError(:VR_Q))
+    end
+    if W_PQ == Dict()
+        throw(UndefKeywordError(:W_PQ))
+    end
+    if D_P == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_P))
+    end
+    if D_Q == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_Q))
+    end
+    if W_PQ_bar == 0
+        throw(UndefKeywordError(:W_PQ_class))
+    end
+
+    ##### apply the extension method between W(P,Q) and VR(P) #####
+    extension_to_VR_P = analogous_bars.run_extension_W_to_VR_bar_birthtime(W = W_PQ, W_bar = W_PQ_bar, C_VR = VR_P, D_VR = D_P, dim = dim)
+    
+    ##### apply the extension method between W(Q,P) and VR(Q) #####
+    # get W(Q,P) info
+    D_P_Q = W_PQ["distance_matrix"]
+    D_Q_P = collect(transpose(D_P_Q))
+
+    # get max parameter for witness filtraiton
+    barcode_W_PQ = barcode(W_PQ["eirene_output"], dim = 1)
+    birth_param = barcode_W_PQ[W_PQ_bar,1]
+
+    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1, param_max = birth_param)
+    
+    # find the bar in W(Q,P) that corresponds to W_PQ_bar
+    P_to_Q = apply_Dowker_birth(W_PQ, W_QP, dim = dim)
+    W_QP_bar = P_to_Q[W_PQ_bar]
+
+    # extension in VR(Q)
+    extension_to_VR_Q = analogous_bars.run_extension_W_to_VR_bar_birthtime(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
     
     return extension_to_VR_P, extension_to_VR_Q
 end
@@ -1527,6 +1586,33 @@ function apply_Dowker(
 end
 
 
+```
+variation of the function "apply_dowker".
+Match bars using birth time alone.
+Assume that the birth times of the Witness filtration are all unique
+```
+function apply_Dowker_birth(
+    W_PQ,
+    W_QP;
+    dim = 1)
+
+    P_to_Q = Dict()
+    barcode_W_PQ = barcode(W_PQ["eirene_output"], dim = dim)
+    barcode_W_QP = barcode(W_QP["eirene_output"], dim = dim)
+    n = size(barcode_W_PQ)[1]
+    for i=1:n
+        birth_rows = findfirst(item -> item == barcode_W_PQ[i,1], barcode_W_QP[:,1])
+#        birth_rows = matchrow(barcode_W_PQ[i,1], barcode_W_QP[:,1])
+        #if size(birth_rows)[1] > 1
+        #    print("ERROR: multiple bars with same birth and death time")
+        #    break
+        #else
+        P_to_Q[i] = birth_rows
+        #end
+    end
+    return P_to_Q
+end
+
 """
     find_barycentric_subdivision(simplex)
 Finds the barycentric subdivision of a 1-dimensional simplex
@@ -1785,6 +1871,12 @@ function get_Witness_cyclerep(W;class_num = nothing, dim = 1)
     for i in cyclerep_idx
        push!(cyclerep, W["index2simplex"][(i, dim)]) 
     end
+    return cyclerep
+end
+
+function get_cyclerep_Eirene(C, classnum)
+    cyclerep = classrep(C, class = classnum, dim = 1)
+    cyclerep = [col for col in eachcol(cyclerep)]
     return cyclerep
 end
         
@@ -2885,6 +2977,89 @@ function find_epsilon0_Fbar_representation_tau_WtoVR2(
     epsilon_0 = maximum(birth)
 
     return epsilon_0, Fbar_representation_tau
+end
+
+function find_epsilon0_Fbar_representation_tau_WtoVR_large_limit( 
+    cycle,  
+    C_aux, 
+    Wpsi_default_vertex_simplex2index; 
+    dim::Int64=1)
+    
+    # express cycle [τ] in H_k(W^psi) as a chain (list of indices) using the indexing of the auxiliary filtration W^psi cap VR^{\bullet}
+    τ_aux_chain = [Wpsi_default_vertex_simplex2index[item][1] for item in cycle]
+        
+    # Find bars of H_k(W^psi \cap Y^{\bullet}) that persist until the last filtration step
+    barcode_aux = barcode(C_aux, dim = dim)
+    candidates = [i for i =1:size(barcode_aux, 1) if (barcode_aux[i,2] == Inf)]
+    
+     # find cycle representatives (as chains) of each candidate intervals
+    candidates_rep = Dict(key => classrep(C_aux, class = key, dim = dim) for key in candidates)
+
+    count = 0
+    count_lim = 1000000
+    for i = 1:size(candidates,1)
+        for comb in combinations(candidates,i)
+            if count < count_lim
+                # express combination [ρ_1 + ... + ρ_m] as a chain 
+                comb_chain = vcat([candidates_rep[item] for item in comb]...)
+
+                # check if comb_chain and [x] are homologous
+                homologous =  analogous_bars.check_homologous_cycles(comb_chain, τ_aux_chain, C_aux)
+                count += 1
+
+                if homologous == true
+                    #print("count: ", count)
+                    #print("\ncomb: ", comb)
+                    Fbar_representation_tau = comb
+
+                    # find epsilon_0
+                    birth = [barcode_aux[x,1] for x in Fbar_representation_tau]
+                    epsilon_0 = maximum(birth)
+
+                    return epsilon_0, Fbar_representation_tau
+
+                end
+            else
+                
+                # Error handling: return error if there are no F-bar representation of τ
+                print("Error!!! Cannot find F-bar representations of τ with limited iterations " * string(count_lim))
+                return nothing, nothing
+
+    
+                
+            end
+        end
+
+    end
+
+    
+    """
+    # find all possible linear combinations candidate bars
+    candidate_comb =  find_linear_combinations(candidates)
+
+    # check if any of the combinations satisfy [τ_*] = [ρ_1] + ... + [ρ_m] in H_n(Z^ψ)
+    Fbar_representation_tau = nothing
+
+    # for each possible linear combination (1, ..., k)
+    for comb in candidate_comb
+        print(comb)
+        # express combination [ρ_1 + ... + ρ_m] as a chain 
+        comb_chain = vcat([candidates_rep[item] for item in comb]...)
+        
+        # check if comb_chain and [x] are homologous
+        homologous =  check_homologous_cycles(comb_chain, τ_aux_chain, C_aux)
+        if homologous == true
+            Fbar_representation_tau = comb
+            break
+        end
+    end
+    """
+    # Error handling: return error if there are no F-bar representation of τ
+    print("Error!!! Cannot find F-bar representations of τ")
+    return nothing, nothing
+   
+    
+    
 end
 
 
@@ -4452,7 +4627,7 @@ function run_baseline_extension_W_to_VR_at_epsilon0(;
  
     # find epsilon_0, Fbar_representation_tau
     #epsilon_0, Fbar_representation_tau =  analogous_bars.find_epsilon0_Fbar_representation_tau_WtoVR2(W_cycle, C_aux, barcode_VR, Wpsi_default_vertex_simplex2index)
-    epsilon_0, Fbar_representation_tau =  analogous_bars.find_epsilon0_Fbar_representation_tau_WtoVR(W_cycle, C_aux, Wpsi_default_vertex_simplex2index)
+    epsilon_0, Fbar_representation_tau =  analogous_bars.find_epsilon0_Fbar_representation_tau_WtoVR_large_limit(W_cycle, C_aux, Wpsi_default_vertex_simplex2index)
     
      # This happens when we couldn't find Fbar representation of tau
     if epsilon_0 == nothing
@@ -4604,6 +4779,75 @@ function run_baseline_similarity_analogous(;
     
     return analogous_bars_P, analogous_bars_Q, W_QP
 end
+
+function run_baseline_similarity_analogous_birthtime_fast(;
+    VR_P::Dict{String, Any} = Dict{String, Any}(),
+    D_P::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    VR_Q::Dict{String, Any} = Dict{String, Any}(),
+    D_Q::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+    W_PQ::Dict{Any, Any} = Dict{Any, Any}(),
+    W_PQ_bar::Int64 = 0,
+    dim::Int64 = 1)
+
+     ##### check input #####
+    if VR_P == Dict()
+        throw(UndefKeywordError(:VR_P))
+    end
+    if VR_Q == Dict()
+        throw(UndefKeywordError(:VR_Q))
+    end
+    if W_PQ == Dict()
+        throw(UndefKeywordError(:W_PQ))
+    end
+    if D_P == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_P))
+    end
+    if D_Q == Array{Float64}(undef, 0, 0)
+        throw(UndefKeywordError(:D_Q))
+    end
+    if W_PQ_bar == 0
+        throw(UndefKeywordError(:W_PQ_class))
+    end
+
+    
+    # find the birth time of the selected bar in the Witness barcode
+    W_PQ_barcode = barcode(W_PQ["eirene_output"], dim = dim)
+    birth_param_W_PQ = W_PQ_barcode[W_PQ_bar,1]
+
+    # find class rep "tau" of Witness filtration
+    cycle_W_P = analogous_bars.find_classrep_in_W(W_PQ, bar = W_PQ_bar, dim = dim)
+    
+    ##### apply the extension method between W(P,Q) and VR(P) #####
+    extension_to_VR_P = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_PQ, tau = cycle_W_P, psi = birth_param_W_PQ, C_VR = VR_P, D_VR = D_P)
+
+    println("extension to P complete")
+    ##### apply the extension method between W(Q,P) and VR(Q) #####
+    # get W(Q,P) info
+    D_P_Q = W_PQ["distance_matrix"]
+    D_Q_P = collect(transpose(D_P_Q))
+
+    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1, param_max = birth_param_W_PQ)
+    
+    # find the bar in W(Q,P) that corresponds to W_PQ_bar
+    P_to_Q = analogous_bars.apply_Dowker_birth(W_PQ, W_QP, dim = dim)
+    W_QP_bar = P_to_Q[W_PQ_bar]
+
+    println("computed Dowker dual")
+    # extension in VR(Q)
+
+    # find class rep "tau" of Witness filtration
+    cycle_W_Q = analogous_bars.find_classrep_in_W(W_QP, bar = W_QP_bar, dim = dim)
+    
+    ##### apply the extension method between W(P,Q) and VR(P) #####
+    extension_to_VR_Q = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_QP, tau = cycle_W_Q, psi = birth_param_W_PQ, C_VR = VR_Q, D_VR = D_Q)
+
+    println("extension to Q complete")
+    #extension_to_VR_Q = analogous_bars.run_extension_W_to_VR_bar_birthtime(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
+    
+    return extension_to_VR_P, extension_to_VR_Q
+end
+
+
 
 """
     run_full_similarity_analogous(; <keyword arguments>)
