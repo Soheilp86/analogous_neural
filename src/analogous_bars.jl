@@ -23,13 +23,14 @@ using StatsBase
 using Printf
 export 
     compute_Witness_persistence,
-    run_extension_VR_to_VR_bar,
-    run_extension_VR_to_VR,
+    #run_extension_VR_to_VR_bar,
+    #run_extension_VR_to_VR,
     run_extension_W_to_VR_bar,
     run_extension_W_to_VR,
-    run_extension_VR_to_W_bar,
-    run_extension_VR_to_W,
+    #run_extension_VR_to_W_bar,
+    #run_extension_VR_to_W,
     run_lazy_extension_VR,
+    run_baseline_similarity_analogous,
     run_similarity_analogous,
     find_Dowker_cycle_correspondence,
     find_CE_BE, 
@@ -51,6 +52,7 @@ export
     plot_cycle,
     plot_3D,
     plot_PD,
+    plot_Dowker_complex,
     plot_cycle_square_torus,
     select_intervals,
     select_persistent_intervals_IQR,
@@ -65,155 +67,157 @@ export
     run_cycle_extension_VR_to_W_bar,
     run_cycle_extension_W_to_VR,
     run_cycle_extension_W_to_VR_bar,
+    select_significant_subcollection,
     find_lazy_Ybar_representations_at_parameter,
     find_single_connected_cycle,
     convert_classrep,
     save_classreps,
-    vector_to_symmetric_matrix
+    vector_to_symmetric_matrix,
+    organize_baseline_offset_extensions
 gr()
 
 #############################################################################################
 # MAIN FUNCTION 
 #############################################################################################
-"""
-    run_extension_VR_to_VR_bar(; <keyword arguments>)
-Runs the bar-to-bar extension method to compare two Vietoris-Rips filtrations. Given a selected bar `Z_bar` in `barcode(C_Z, dim = dim)`, finds its cycle extension and bar extension in `C_Y` and `barcode(C_Y, dim = dim)`.
+# """
+#     run_extension_VR_to_VR_bar(; <keyword arguments>)
+# Runs the bar-to-bar extension method to compare two Vietoris-Rips filtrations. Given a selected bar `Z_bar` in `barcode(C_Z, dim = dim)`, finds its cycle extension and bar extension in `C_Y` and `barcode(C_Y, dim = dim)`.
 
-Using paper notation: given a selected bar in ``\\text{BC}_k(Z^{\\bullet})``, finds the cycle extension in ``Y^{\\bullet}`` and bar extension in ``\\text{BC}_k(Y^{\\bullet})``.
+# Using paper notation: given a selected bar in ``\\text{BC}_k(Z^{\\bullet})``, finds the cycle extension in ``Y^{\\bullet}`` and bar extension in ``\\text{BC}_k(Y^{\\bullet})``.
 
-### Arguments
-- `C_Z::Dictionary`: Eirene output of filtration `Z`
-- `D_Z::Array`: Distance matrix used to compute `C_Z`
-- `C_Y::Dictionary`: Eirene output of filtration `Y`
-- `D_Y::Array`: Distance matrix used to compute `C_Y`
-- `Z_bar::Integer`: Index of selected bar from `barcode(C_Z, dim = dim)`
-- `dim::Integer=1`: Dimension. Defaults to 1
+# ### Arguments
+# - `C_Z::Dictionary`: Eirene output of filtration `Z`
+# - `D_Z::Array`: Distance matrix used to compute `C_Z`
+# - `C_Y::Dictionary`: Eirene output of filtration `Y`
+# - `D_Y::Array`: Distance matrix used to compute `C_Y`
+# - `Z_bar::Integer`: Index of selected bar from `barcode(C_Z, dim = dim)`
+# - `dim::Integer=1`: Dimension. Defaults to 1
 
-### Returns
-- `extension`: Dictionary. **For details, see the document "code_details.pdf"** or the comments on function `run_extension_VR_to_VR`
-"""
-function run_extension_VR_to_VR_bar(;
-    C_Z::Dict{String, Any} = Dict{String, Any}(),
-    D_Z::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
-    C_Y::Dict{String, Any} = Dict{String, Any}(),
-    D_Y::Array{Float64,2} = Array{Float64}(undef, 0, 0),
-    Z_bar::Int64 = 0,
-    dim::Int64 = 1)
+# ### Returns
+# - `extension`: Dictionary. **For details, see the document "code_details.pdf"** or the comments on function `run_extension_VR_to_VR`
+# """
+# function run_extension_VR_to_VR_bar(;
+#     C_Z::Dict{String, Any} = Dict{String, Any}(),
+#     D_Z::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+#     C_Y::Dict{String, Any} = Dict{String, Any}(),
+#     D_Y::Array{Float64,2} = Array{Float64}(undef, 0, 0),
+#     Z_bar::Int64 = 0,
+#     dim::Int64 = 1)
     
-    # find terminal class rep "tau" and parameter "delta"
-    tau, psi = find_terminal_class_in_VR(C_Z, D_Z, bar = Z_bar, dim = dim)
+#     # find terminal class rep "tau" and parameter "delta"
+#     tau, psi = find_terminal_class_in_VR(C_Z, D_Z, bar = Z_bar, dim = dim)
     
-    # run extension method
-    extension = run_extension_VR_to_VR(C_Z = C_Z, Z_cycle = tau, psi = psi, C_Y = C_Y, D_Y = D_Y, dim = dim)
+#     # run extension method
+#     extension = run_extension_VR_to_VR(C_Z = C_Z, Z_cycle = tau, psi = psi, C_Y = C_Y, D_Y = D_Y, dim = dim)
 
-    return extension
-end
+#     return extension
+# end
 
-"""
-    run_extension_VR_to_VR(; <keyword arguments>)
-Runs the cycle-to-bar persistent extension method to compare two Vietoris-Rips filtrations. Given a cycle `Z_cycle` and a parameter `psi`, finds its cycle and bar extensions in `C_Y` and `barcode(C_Y, dim = dim)`.
+# """
+#     run_extension_VR_to_VR(; <keyword arguments>)
+# Runs the cycle-to-bar persistent extension method to compare two Vietoris-Rips filtrations. Given a cycle `Z_cycle` and a parameter `psi`, finds its cycle and bar extensions in `C_Y` and `barcode(C_Y, dim = dim)`.
 
-Using paper notation: given a cycle and a parameter ``[\\tau] \\in H_k(Z^{\\psi})``, finds its representations in ``Y^{\\bullet}`` and ``\\text{BC}_k(Y^{\\bullet})``.
+# Using paper notation: given a cycle and a parameter ``[\\tau] \\in H_k(Z^{\\psi})``, finds its representations in ``Y^{\\bullet}`` and ``\\text{BC}_k(Y^{\\bullet})``.
 
-### Arguments
-- `C_Z::Dictionary`: Eirene output of filtration `Z`
-- `Z_cycle`: Selected cycle of interest in complex `Z`. Format: ``[[v^1_1, v^1_2], [v^2_1, v^2_2], ...,]``
-- `psi`: parameter
-- `C_Y::Dictionary`: Eirene output of filtration `Y`
-- `D_Y::Array`: Distance matrix used to compute `C_Y`
-- `dim::Integer=1`: Dimension. Defaults to 1
+# ### Arguments
+# - `C_Z::Dictionary`: Eirene output of filtration `Z`
+# - `Z_cycle`: Selected cycle of interest in complex `Z`. Format: ``[[v^1_1, v^1_2], [v^2_1, v^2_2], ...,]``
+# - `psi`: parameter
+# - `C_Y::Dictionary`: Eirene output of filtration `Y`
+# - `D_Y::Array`: Distance matrix used to compute `C_Y`
+# - `dim::Integer=1`: Dimension. Defaults to 1
 
-### Outputs
-Function outputs a dictionary with the following keys. 
-**For a more detailed explanation, see the document "code_details.pdf".**
+# ### Outputs
+# Function outputs a dictionary with the following keys. 
+# **For a more detailed explanation, see the document "code_details.pdf".**
 
-- `comparison`: Indicates the types of filtrations under comparison. Value will be "VR to VR".
-- `C_Z`: copy of input `C_Z`
-- `C_Y`: copy of input `C_Y`
-- `dim`: dimension of interest. copy of input `dim`
-- `selected_cycle`: copy of input `Z_cycle`
-- `C_auxiliary_filtration`: Eirene output of filtration ``Z^{\\psi} \\cap Y^{\\bullet}``
-- `aux_filt_cycle_rep`: cycle representatives of bars in `C_auxiliary_filtration`
-- `p_Y`: collection of parameter values for ``p_Y``
-- `epsilon_0`: minimum value in `p_Y`
-- `nontrivial_pY`: A subcollection of parameters in `p_Y`. To find all cycle extensions or bar extensions, it suffices to consider only the parameters in `nontrivial_pY` (instead of `p_Y`, which is quite large)
-- `nontrivial_pY_dict`: A dictionary of parameter index and values.
-- `Ybar_rep_tau`: ``\\mathcal{D}``-bar representation of the ``\\mathcal{F}``-bar representations of the `selected_cycle`. 
-- `Ybar_rep_short_epsilon0`: A dictionary of the short bars of `C_auxiliary_filtration` that are alive at parameter `epsilon_0` and their ``\\mathcal{D}``-bar representations.
-- `Ybar_rep_short`: A dictionary of all other short bars of `C_auxiliary_filtration` and their ``\\mathcal{D}``-bar representations.
-- `cycle_extensions`: A dictionary summarizing cycle extensions at various parameters.
-- `bar_extensions`: A dictionary summarizing bar extensions at various parameters. 
-"""
-function run_extension_VR_to_VR(;
-    C_Z::Dict{String, Any} = Dict{String, Any}(),
-    Z_cycle::Array{Array{Int64,1},1} = [[0,0]],
-    psi::Float64 = -1.0, 
-    C_Y::Dict{String, Any} = Dict{String, Any}(),
-    D_Y::Array{Float64,2} = Array{Float64}(undef, 0, 0),
-    dim::Int64 = 1)
+# - `comparison`: Indicates the types of filtrations under comparison. Value will be "VR to VR".
+# - `C_Z`: copy of input `C_Z`
+# - `C_Y`: copy of input `C_Y`
+# - `dim`: dimension of interest. copy of input `dim`
+# - `selected_cycle`: copy of input `Z_cycle`
+# - `C_auxiliary_filtration`: Eirene output of filtration ``Z^{\\psi} \\cap Y^{\\bullet}``
+# - `aux_filt_cycle_rep`: cycle representatives of bars in `C_auxiliary_filtration`
+# - `p_Y`: collection of parameter values for ``p_Y``
+# - `epsilon_0`: minimum value in `p_Y`
+# - `nontrivial_pY`: A subcollection of parameters in `p_Y`. To find all cycle extensions or bar extensions, it suffices to consider only the parameters in `nontrivial_pY` (instead of `p_Y`, which is quite large)
+# - `nontrivial_pY_dict`: A dictionary of parameter index and values.
+# - `Ybar_rep_tau`: ``\\mathcal{D}``-bar representation of the ``\\mathcal{F}``-bar representations of the `selected_cycle`. 
+# - `Ybar_rep_short_epsilon0`: A dictionary of the short bars of `C_auxiliary_filtration` that are alive at parameter `epsilon_0` and their ``\\mathcal{D}``-bar representations.
+# - `Ybar_rep_short`: A dictionary of all other short bars of `C_auxiliary_filtration` and their ``\\mathcal{D}``-bar representations.
+# - `cycle_extensions`: A dictionary summarizing cycle extensions at various parameters.
+# - `bar_extensions`: A dictionary summarizing bar extensions at various parameters. 
+# """
+# function run_extension_VR_to_VR(;
+#     C_Z::Dict{String, Any} = Dict{String, Any}(),
+#     Z_cycle::Array{Array{Int64,1},1} = [[0,0]],
+#     psi::Float64 = -1.0, 
+#     C_Y::Dict{String, Any} = Dict{String, Any}(),
+#     D_Y::Array{Float64,2} = Array{Float64}(undef, 0, 0),
+#     dim::Int64 = 1)
 
-    ##### check input #####
-    if C_Z == Dict()
-        throw(UndefKeywordError(:C_Z))
-    end
-    if C_Y == Dict()
-        throw(UndefKeywordError(:C_Y))
-    end
-    if D_Y == Array{Float64}(undef, 0, 0)
-        throw(UndefKeywordError(:D_Y))
-    end
-    if Z_cycle == 0
-        throw(UndefKeywordError(:Z_cycle))
-    end
-    if psi == -1.0
-        throw(UndefKeywordError(:psi))
-    end
+#     ##### check input #####
+#     if C_Z == Dict()
+#         throw(UndefKeywordError(:C_Z))
+#     end
+#     if C_Y == Dict()
+#         throw(UndefKeywordError(:C_Y))
+#     end
+#     if D_Y == Array{Float64}(undef, 0, 0)
+#         throw(UndefKeywordError(:D_Y))
+#     end
+#     if Z_cycle == 0
+#         throw(UndefKeywordError(:Z_cycle))
+#     end
+#     if psi == -1.0
+#         throw(UndefKeywordError(:psi))
+#     end
 
-    # build auxiliary filtration 
-    C_aux, Zpsi_index2simplex, Zpsi_simplex2index = build_auxiliary_filtration(C_Z, psi, D_Y, format = "VR to VR", dim = dim)
+#     # build auxiliary filtration 
+#     C_aux, Zpsi_index2simplex, Zpsi_simplex2index = build_auxiliary_filtration(C_Z, psi, D_Y, format = "VR to VR", dim = dim)
     
-    # find epsilon_0, Fbar_representation_tau
-    epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau(Z_cycle, C_aux, Zpsi_simplex2index, dim = dim)
+#     # find epsilon_0, Fbar_representation_tau
+#     epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau(Z_cycle, C_aux, Zpsi_simplex2index, dim = dim)
 
-    # find p_Y and BARS_short
-    #max_pY = maximum(barcode(C_Y, dim = dim)[:,2])
-    p_Y, BARS_short = find_pY_and_BARSshort(C_aux, epsilon_0, dim = dim)
+#     # find p_Y and BARS_short
+#     #max_pY = maximum(barcode(C_Y, dim = dim)[:,2])
+#     p_Y, BARS_short = find_pY_and_BARSshort(C_aux, epsilon_0, dim = dim)
     
-    # find cyclereps of Fbar_representation_tau and BARS_short using vertices
-    cycle_reps = find_cyclereps_auxiliary(Fbar_representation_tau, BARS_short, C_aux, Zpsi_index2simplex)
+#     # find cyclereps of Fbar_representation_tau and BARS_short using vertices
+#     cycle_reps = find_cyclereps_auxiliary(Fbar_representation_tau, BARS_short, C_aux, Zpsi_index2simplex)
 
-    # find component-wise bar-representations
-    Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short = find_all_bar_representations(C_aux, p_Y, cycle_reps, C_Y, D_Y, dim = dim)
+#     # find component-wise bar-representations
+#     Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short = find_all_bar_representations(C_aux, p_Y, cycle_reps, C_Y, D_Y, dim = dim)
     
-    # create summary (by parameter)
-    nontrivial_pY, nontrivial_pY_dict, cycle_extensions, bar_extensions = create_summary_by_parameter(cycle_reps, Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short, epsilon_0, C_aux, C_Y)
+#     # create summary (by parameter)
+#     nontrivial_pY, nontrivial_pY_dict, cycle_extensions, bar_extensions = create_summary_by_parameter(cycle_reps, Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short, epsilon_0, C_aux, C_Y)
     
-    ### create output dictionary
-    extension = Dict()
-    # input data
-    extension["comparison"] = "VR to VR"
-    extension["C_Z"] = C_Z
-    extension["C_Y"] = C_Y
-    extension["dim"] = dim 
-    extension["selected_cycle"] = Z_cycle 
-    # auxiliary filtration & cyclerep
-    extension["C_auxiliary_filtration"] = C_aux
-    extension["aux_filt_cyclerep"] = cycle_reps
-    # parameters pY
-    extension["p_Y"] = p_Y
-    extension["epsilon_0"] = epsilon_0
-    # component-wise Ybar representations
-    extension["Ybar_rep_tau"] = Ybar_rep_tau
-    extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
-    extension["Ybar_rep_short"] = Ybar_rep_short
-    # exploring results by parameter
-    extension["nontrivial_pY"] = nontrivial_pY
-    extension["nontrivial_pY_dict"] = nontrivial_pY_dict
-    extension["cycle_extensions"] = cycle_extensions
-    extension["bar_extensions"] = bar_extensions
+#     ### create output dictionary
+#     extension = Dict()
+#     # input data
+#     extension["comparison"] = "VR to VR"
+#     extension["C_Z"] = C_Z
+#     extension["C_Y"] = C_Y
+#     extension["dim"] = dim 
+#     extension["selected_cycle"] = Z_cycle 
+#     # auxiliary filtration & cyclerep
+#     extension["C_auxiliary_filtration"] = C_aux
+#     extension["aux_filt_cyclerep"] = cycle_reps
+#     # parameters pY
+#     extension["p_Y"] = p_Y
+#     extension["epsilon_0"] = epsilon_0
+#     # component-wise Ybar representations
+#     extension["Ybar_rep_tau"] = Ybar_rep_tau
+#     extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
+#     extension["Ybar_rep_short"] = Ybar_rep_short
+#     # exploring results by parameter
+#     extension["nontrivial_pY"] = nontrivial_pY
+#     extension["nontrivial_pY_dict"] = nontrivial_pY_dict
+#     extension["cycle_extensions"] = cycle_extensions
+#     extension["bar_extensions"] = bar_extensions
     
-    return extension
-end
+#     return extension
+# end
 
 
 """
@@ -355,9 +359,9 @@ function run_extension_W_to_VR(;
     extension["epsilon_0"] = epsilon_0
     #extension["min_epsilon_with_boundary"] = min_epsilon_with_boundary
     # component-wise Ybar representations
-    extension["Ybar_rep_tau"] = Ybar_rep_tau
-    extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
-    extension["Ybar_rep_short"] = Ybar_rep_short
+    extension["baseline_bar_extension"] = Ybar_rep_tau
+    extension["offset_bar_extension_epsilon0"] = Ybar_rep_short_epsilon0
+    extension["offset_bar_extension"] = Ybar_rep_short
     # exploring results by parameter
     extension["nontrivial_pY"] = nontrivial_pY
     extension["nontrivial_pY_dict"] = nontrivial_pY_dict
@@ -368,148 +372,148 @@ function run_extension_W_to_VR(;
 end
 
 
-"""
-    run_extension_VR_to_W_bar(<keyword arguments>)
-Runs the bar-to-bars extension method to compare a Vietoris-Rips barcode and a Witness barcode. Given a bar `VR_bar` in the VR barcode, finds the cycle and bar extensions in `W` and `barcode(W, dim = dim)`. 
+# """
+#     run_extension_VR_to_W_bar(<keyword arguments>)
+# Runs the bar-to-bars extension method to compare a Vietoris-Rips barcode and a Witness barcode. Given a bar `VR_bar` in the VR barcode, finds the cycle and bar extensions in `W` and `barcode(W, dim = dim)`. 
 
-### Arguments
-- `C_VR::Dict{String, Any}`: Dictionary output of Eirene on Vietoris-Rips filtration
-- `D_VR::Array{Float64, 2}`: Distance matrix used to compute `C_VR`
-- `VR_bar::Int64`: Selected bar in the VR barcode
-- `W::Dict{Any, Any}`: Dictionary output of function `compute_Witness_persistence`
-- `D_W::Array{Float64, 2}`: Distance matrix used to compute `C_W`
-- `dim::Int64 = 1`: Dimension. Defaults to 1
+# ### Arguments
+# - `C_VR::Dict{String, Any}`: Dictionary output of Eirene on Vietoris-Rips filtration
+# - `D_VR::Array{Float64, 2}`: Distance matrix used to compute `C_VR`
+# - `VR_bar::Int64`: Selected bar in the VR barcode
+# - `W::Dict{Any, Any}`: Dictionary output of function `compute_Witness_persistence`
+# - `D_W::Array{Float64, 2}`: Distance matrix used to compute `C_W`
+# - `dim::Int64 = 1`: Dimension. Defaults to 1
 
-### Returns
-- `extension`: Dictionary. **For details, see the document "code_details.pdf"** or the comments on function `run_extension_VR_to_W` 
-"""
-function run_extension_VR_to_W_bar(;
-    C_VR::Dict{String, Any} = Dict{String, Any}(),
-    D_VR::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
-    VR_bar::Int64 = 0,
-    W::Dict{Any, Any} = Dict{Any, Any}(),
-    D_W::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
-    dim::Int64 = 1)
+# ### Returns
+# - `extension`: Dictionary. **For details, see the document "code_details.pdf"** or the comments on function `run_extension_VR_to_W` 
+# """
+# function run_extension_VR_to_W_bar(;
+#     C_VR::Dict{String, Any} = Dict{String, Any}(),
+#     D_VR::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+#     VR_bar::Int64 = 0,
+#     W::Dict{Any, Any} = Dict{Any, Any}(),
+#     D_W::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+#     dim::Int64 = 1)
     
-    # find terminal class rep "tau" and parameter "psi"
-    tau, psi = find_terminal_class_in_VR(C_VR, D_VR, bar = VR_bar, dim = dim)
+#     # find terminal class rep "tau" and parameter "psi"
+#     tau, psi = find_terminal_class_in_VR(C_VR, D_VR, bar = VR_bar, dim = dim)
     
-    # run extension method from W to VR
-    extension = run_extension_VR_to_W(C_VR = C_VR, D_VR = D_VR, VR_cycle = tau, psi = psi, W = W, D_W = D_W, dim = dim)
-    return extension
-end
+#     # run extension method from W to VR
+#     extension = run_extension_VR_to_W(C_VR = C_VR, D_VR = D_VR, VR_cycle = tau, psi = psi, W = W, D_W = D_W, dim = dim)
+#     return extension
+# end
 
-"""
-    run_extension_VR_to_W(; <keyword arguments>)
-Runs the cycle-to-bars extension method to compare a Vietoris-Rips barcode and a Witness barcode. Given a cycle `VR_cycle` in the VR barcode, finds the cycle and bar extensions in `W` and `barcode(W, dim = dim)`. 
-Note: The 0-simplices of the Vietoris-Rips filtration and the Witness filtration must be the same.
+# """
+#     run_extension_VR_to_W(; <keyword arguments>)
+# Runs the cycle-to-bars extension method to compare a Vietoris-Rips barcode and a Witness barcode. Given a cycle `VR_cycle` in the VR barcode, finds the cycle and bar extensions in `W` and `barcode(W, dim = dim)`. 
+# Note: The 0-simplices of the Vietoris-Rips filtration and the Witness filtration must be the same.
 
-### Arguments
-- `C_VR::Dict{String, Any}`: Dictionary output of Eirene on Vietoris-Rips filtration
-- `D_VR::Array{Float64, 2}`: Distance matrix used to compute `C_VR`
-- `VR_cycle`: cycle of interest in the VR filtration. Format: ``[[v^1_1, v^1_2], [v^2_1, v^2_2], ...,]``
-- `psi`: parameter
-- `W::Dict{Any, Any}`: Dictionary output of function `compute_Witness_persistence`
-- `D_W::Array{Float64, 2}`: Distance matrix used to compute the Witness filtration
-- `dim::Int64 = 1`: Dimension. Defaults to 1    
+# ### Arguments
+# - `C_VR::Dict{String, Any}`: Dictionary output of Eirene on Vietoris-Rips filtration
+# - `D_VR::Array{Float64, 2}`: Distance matrix used to compute `C_VR`
+# - `VR_cycle`: cycle of interest in the VR filtration. Format: ``[[v^1_1, v^1_2], [v^2_1, v^2_2], ...,]``
+# - `psi`: parameter
+# - `W::Dict{Any, Any}`: Dictionary output of function `compute_Witness_persistence`
+# - `D_W::Array{Float64, 2}`: Distance matrix used to compute the Witness filtration
+# - `dim::Int64 = 1`: Dimension. Defaults to 1    
 
-### Outputs
-Function outputs a dictionary with the following keys. 
-**For a more detailed explanation, see the document "code_details.pdf".**
+# ### Outputs
+# Function outputs a dictionary with the following keys. 
+# **For a more detailed explanation, see the document "code_details.pdf".**
 
-- `comparison`: Indicates the types of filtrations under comparison. Value will be "W to VR".
-- `C_VR`: copy of input `C_VR`
-- `C_W`: copy of input `C_W`
-- `dim`: dimension of interest. copy of input `dim`
-- `selected_cycle`: copy of input `VR_cycle`
-- `C_auxiliary_filtration`: Eirene output of filtration ``VR^{\\psi} \\cap W^{\\bullet}``
-- `aux_filt_cycle_rep`: cycle representatives of bars in `C_auxiliary_filtration`
-- `p_Y`: collection of parameter values for ``p_Y``
-- `epsilon_0`: minimum value in `p_Y`
-- `nontrivial_pY`: A subcollection of parameters in `p_Y`. To find all cycle extensions or bar extensions, it suffices to consider only the parameters in `nontrivial_pY` (instead of `p_Y`, which is quite large)
-- `nontrivial_pY_dict`: A dictionary of parameter index and values.
-- `Ybar_rep_tau`: ``\\mathcal{D}``-bar representation of the ``\\mathcal{F}``-bar representations of the `selected_cycle`. 
-- `Ybar_rep_short_epsilon0`: A dictionary of the short bars of `C_auxiliary_filtration` that are alive at parameter `epsilon_0` and their ``\\mathcal{D}``-bar representations.
-- `Ybar_rep_short`: A dictionary of all other short bars of `C_auxiliary_filtration` and their ``\\mathcal{D}``-bar representations.
-- `cycle_extensions`: A dictionary summarizing cycle extensions at various parameters.
-- `bar_extensions`: A dictionary summarizing bar extensions at various parameters. 
-"""
-function run_extension_VR_to_W(;
-    C_VR::Dict{String, Any} = Dict{String, Any}(),
-    D_VR::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
-    VR_cycle::Array{Array{Int64,1},1} = [[0,0]],
-    psi::Float64 = -1.0, 
-    W::Dict{Any, Any} = Dict{Any, Any}(),
-    D_W::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
-    dim::Int64 = 1)
+# - `comparison`: Indicates the types of filtrations under comparison. Value will be "W to VR".
+# - `C_VR`: copy of input `C_VR`
+# - `C_W`: copy of input `C_W`
+# - `dim`: dimension of interest. copy of input `dim`
+# - `selected_cycle`: copy of input `VR_cycle`
+# - `C_auxiliary_filtration`: Eirene output of filtration ``VR^{\\psi} \\cap W^{\\bullet}``
+# - `aux_filt_cycle_rep`: cycle representatives of bars in `C_auxiliary_filtration`
+# - `p_Y`: collection of parameter values for ``p_Y``
+# - `epsilon_0`: minimum value in `p_Y`
+# - `nontrivial_pY`: A subcollection of parameters in `p_Y`. To find all cycle extensions or bar extensions, it suffices to consider only the parameters in `nontrivial_pY` (instead of `p_Y`, which is quite large)
+# - `nontrivial_pY_dict`: A dictionary of parameter index and values.
+# - `Ybar_rep_tau`: ``\\mathcal{D}``-bar representation of the ``\\mathcal{F}``-bar representations of the `selected_cycle`. 
+# - `Ybar_rep_short_epsilon0`: A dictionary of the short bars of `C_auxiliary_filtration` that are alive at parameter `epsilon_0` and their ``\\mathcal{D}``-bar representations.
+# - `Ybar_rep_short`: A dictionary of all other short bars of `C_auxiliary_filtration` and their ``\\mathcal{D}``-bar representations.
+# - `cycle_extensions`: A dictionary summarizing cycle extensions at various parameters.
+# - `bar_extensions`: A dictionary summarizing bar extensions at various parameters. 
+# """
+# function run_extension_VR_to_W(;
+#     C_VR::Dict{String, Any} = Dict{String, Any}(),
+#     D_VR::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+#     VR_cycle::Array{Array{Int64,1},1} = [[0,0]],
+#     psi::Float64 = -1.0, 
+#     W::Dict{Any, Any} = Dict{Any, Any}(),
+#     D_W::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
+#     dim::Int64 = 1)
       
-    ##### check input #####
-    if W == Dict()
-        throw(UndefKeywordError(:W))
-    end
-    if C_VR == Dict()
-        throw(UndefKeywordError(:C_VR))
-    end
-    if D_VR == Array{Float64}(undef, 0, 0)
-        throw(UndefKeywordError(:D_VR))
-    end
-    if D_W == Array{Float64}(undef, 0, 0)
-        throw(UndefKeywordError(:D_W))
-    end
-    if psi == -1.0
-        throw(UndefKeywordError(:psi))
-    end
+#     ##### check input #####
+#     if W == Dict()
+#         throw(UndefKeywordError(:W))
+#     end
+#     if C_VR == Dict()
+#         throw(UndefKeywordError(:C_VR))
+#     end
+#     if D_VR == Array{Float64}(undef, 0, 0)
+#         throw(UndefKeywordError(:D_VR))
+#     end
+#     if D_W == Array{Float64}(undef, 0, 0)
+#         throw(UndefKeywordError(:D_W))
+#     end
+#     if psi == -1.0
+#         throw(UndefKeywordError(:psi))
+#     end
     
     
-    # unpack variables
-    C_W = W["eirene_output"]
+#     # unpack variables
+#     C_W = W["eirene_output"]
     
-    # build the auxiliary filtration
-    C_aux, Zpsi_index2simplex, Zpsi_simplex2index = build_auxiliary_filtration(C_VR, psi, D_W, format = "VR to W", dim = dim)
+#     # build the auxiliary filtration
+#     C_aux, Zpsi_index2simplex, Zpsi_simplex2index = build_auxiliary_filtration(C_VR, psi, D_W, format = "VR to W", dim = dim)
 
-    # find epsilon_0, Fbar_representation_tau
-    epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau(VR_cycle, C_aux, Zpsi_simplex2index, dim = dim)
+#     # find epsilon_0, Fbar_representation_tau
+#     epsilon_0, Fbar_representation_tau = find_epsilon0_Fbar_representation_tau(VR_cycle, C_aux, Zpsi_simplex2index, dim = dim)
 
-    # find p_Y and BARS_short
-    #max_pY = maximum(barcode(C_W, dim = dim)[:,2])
-    p_Y, BARS_short = find_pY_and_BARSshort(C_aux, epsilon_0, dim = dim)
+#     # find p_Y and BARS_short
+#     #max_pY = maximum(barcode(C_W, dim = dim)[:,2])
+#     p_Y, BARS_short = find_pY_and_BARSshort(C_aux, epsilon_0, dim = dim)
     
-    # find cyclereps of Fbar_representation_tau and BARS_short using vertices
-    cycle_reps = find_cyclereps_auxiliary(Fbar_representation_tau, BARS_short, C_aux, Zpsi_index2simplex)
+#     # find cyclereps of Fbar_representation_tau and BARS_short using vertices
+#     cycle_reps = find_cyclereps_auxiliary(Fbar_representation_tau, BARS_short, C_aux, Zpsi_index2simplex)
 
-    # find component-wise bar-representations
-    Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short = find_all_bar_representations_W(C_aux, p_Y, cycle_reps, Zpsi_index2simplex, W, dim = dim)
+#     # find component-wise bar-representations
+#     Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short = find_all_bar_representations_W(C_aux, p_Y, cycle_reps, Zpsi_index2simplex, W, dim = dim)
     
-    # create summary (by parameter)
-    nontrivial_pY, nontrivial_pY_dict, cycle_extensions, bar_extensions = create_summary_by_parameter(cycle_reps, Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short, epsilon_0, C_aux, C_W)
+#     # create summary (by parameter)
+#     nontrivial_pY, nontrivial_pY_dict, cycle_extensions, bar_extensions = create_summary_by_parameter(cycle_reps, Ybar_rep_tau, Ybar_rep_short_epsilon0, Ybar_rep_short, epsilon_0, C_aux, C_W)
     
  
-    ### create output dictionary
-    extension = Dict()
-    # input data
-    extension["comparison"] = "VR to W"
-    extension["C_VR"] = C_VR
-    extension["C_W"] = C_W
-    extension["dim"] = dim 
-    extension["selected_cycle"] = VR_cycle 
-    # auxiliary filtration & cyclerep
-    extension["C_auxiliary_filtration"] = C_aux
-    extension["aux_filt_cyclerep"] = cycle_reps
-    # parameters pY
-    extension["p_Y"] = p_Y
-    extension["epsilon_0"] = epsilon_0
-    # component-wise Ybar representations
-    extension["Ybar_rep_tau"] = Ybar_rep_tau
-    extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
-    extension["Ybar_rep_short"] = Ybar_rep_short
-    # exploring results by parameter
-    extension["nontrivial_pY"] = nontrivial_pY
-    extension["nontrivial_pY_dict"] = nontrivial_pY_dict
-    extension["cycle_extensions"] = cycle_extensions
-    extension["bar_extensions"] = bar_extensions
+#     ### create output dictionary
+#     extension = Dict()
+#     # input data
+#     extension["comparison"] = "VR to W"
+#     extension["C_VR"] = C_VR
+#     extension["C_W"] = C_W
+#     extension["dim"] = dim 
+#     extension["selected_cycle"] = VR_cycle 
+#     # auxiliary filtration & cyclerep
+#     extension["C_auxiliary_filtration"] = C_aux
+#     extension["aux_filt_cyclerep"] = cycle_reps
+#     # parameters pY
+#     extension["p_Y"] = p_Y
+#     extension["epsilon_0"] = epsilon_0
+#     # component-wise Ybar representations
+#     extension["Ybar_rep_tau"] = Ybar_rep_tau
+#     extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
+#     extension["Ybar_rep_short"] = Ybar_rep_short
+#     # exploring results by parameter
+#     extension["nontrivial_pY"] = nontrivial_pY
+#     extension["nontrivial_pY_dict"] = nontrivial_pY_dict
+#     extension["cycle_extensions"] = cycle_extensions
+#     extension["bar_extensions"] = bar_extensions
     
-    return extension
-end
+#     return extension
+# end
 
 """
     run_similarity_analogous(; <keyword arguments>)
@@ -558,21 +562,47 @@ function run_similarity_analogous(;
         throw(UndefKeywordError(:W_PQ_class))
     end
     
-    ##### apply the extension method between W(P,Q) and VR(P) #####
+    ############################################################
+    # 1. apply the extension method between W(P,Q) and VR(P)
+    ############################################################
     extension_to_VR_P = run_extension_W_to_VR_bar(W = W_PQ, W_bar = W_PQ_bar, C_VR = VR_P, D_VR = D_P, dim = dim)
+    println("Extension to P complete.")
 
-    ##### apply the extension method between W(Q,P) and VR(Q) #####
-    # get W(Q,P) info
-    D_P_Q = W_PQ["distance_matrix"]
-    D_Q_P = collect(transpose(D_P_Q))
-    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1)
-    
+    ############################################################
+    # 2. Compute the dual Witness complex
+    ############################################################
+    W_PQ_barcode = barcode(W_PQ["eirene_output"], dim = dim)
+    W_death_param = find_max_death_param(W_PQ_barcode, [W_PQ_bar])
+
+    W_QP, P_to_Q = compute_Dowker_dual(W_PQ, param_max = W_death_param)
+
     # find the bar in W(Q,P) that corresponds to W_PQ_bar
-    P_to_Q = apply_Dowker(W_PQ, W_QP, dim = dim)
     W_QP_bar = P_to_Q[W_PQ_bar]
-        
-    # extension in VR(Q)
+
+    println("computed dual Witness filtration.")
+    
+    ############################################################
+    # 3. apply the extension method between W(Q,P) and VR(Q)
+    ############################################################
+
+    ##### apply the extension method between W(P,Q) and VR(Q) #####
     extension_to_VR_Q = run_extension_W_to_VR_bar(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
+    println("Extension to Q complete.")
+    # ##### apply the extension method between W(P,Q) and VR(P) #####
+    # extension_to_VR_P = run_extension_W_to_VR_bar(W = W_PQ, W_bar = W_PQ_bar, C_VR = VR_P, D_VR = D_P, dim = dim)
+
+    # ##### apply the extension method between W(Q,P) and VR(Q) #####
+    # # get W(Q,P) info
+    # D_P_Q = W_PQ["distance_matrix"]
+    # D_Q_P = collect(transpose(D_P_Q))
+    # W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1)
+    
+    # # find the bar in W(Q,P) that corresponds to W_PQ_bar
+    # P_to_Q = apply_Dowker(W_PQ, W_QP, dim = dim)
+    # W_QP_bar = P_to_Q[W_PQ_bar]
+        
+    # # extension in VR(Q)
+    # extension_to_VR_Q = run_extension_W_to_VR_bar(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
     
     return extension_to_VR_P, extension_to_VR_Q
 end
@@ -686,6 +716,7 @@ function run_birthtime_similarity_analogous(;
     
     return extension_to_VR_P, extension_to_VR_Q
 end
+
 
 ```
 Variation of the function `run_similarity_analogous_birthtime`.
@@ -1146,6 +1177,32 @@ function create_summary_by_parameter(
 end
 
 
+"""
+Given the output of function `run_similarity_analogous`, organize the baseline and offset extensions
+using significant cycles. 
+"""
+function organize_baseline_offset_extensions(analogous_P_full, significant_P, analogous_Q_full, significant_Q)
+    # gather baseline extensions
+    P_baseline = [i for i in analogous_P_full["baseline_bar_extension"] if i in significant_P]
+    Q_baseline = [i for i in analogous_Q_full["baseline_bar_extension"] if i in significant_Q]
+
+    # organize offset extensions
+    P_offset_dict = select_significant_subcollection(analogous_P_full["offset_bar_extension"], significant_P)
+    P_offset_bars = [v for (k,v) in P_offset_dict]
+
+    Q_offset_dict = select_significant_subcollection(analogous_Q_full["offset_bar_extension"], significant_Q)
+    Q_offset_bars = [v for (k,v) in Q_offset_dict]
+
+    extensions = Dict()
+    extensions["P_baseline"] = P_baseline
+    extensions["P_offset"] = P_offset_bars
+    extensions["Q_baseline"] = Q_baseline
+    extensions["Q_offset"] = Q_offset_bars
+
+    return extensions
+
+end
+
 #################################################################################
 # functions for visualizations
 #################################################################################
@@ -1515,19 +1572,14 @@ end
 
 function plot_cycle_single_square_torus(P; # array of size (m,2)
     cycle = [],
-    cycle_loc = "P",
     cycle_color = :deeppink,
     cycle_linewidth = 5,
-    P_color = "#008181", 
-    P_label = "",
-    P_markersize = 5,
-    P_marker = :circle,
     kwargs...)
     # plot one-dimensional cycle on square torus
-    p = plot(framestyle = :box, yaxis = nothing, xaxis = nothing; kwargs...)
+    p = plot(framestyle = :box, yaxis = nothing, xaxis = nothing)
 
     # plot P
-    scatter!(p, P[:,1], P[:,2], color = P_color, label = P_label, markersize = P_markersize, marker = P_marker)    
+    scatter!(p, P[:,1], P[:,2]; kwargs...)    
 
     PC = P
     for simplex in cycle
@@ -4229,12 +4281,25 @@ function find_all_homology_classes(C; selected_bars = [], dim = 1)
     return alternative_classes
 end
 
+"""
+Find the minimum death parameter among bars1 in barcode1 and bars2 in barcode2.
+"""
+function find_min_death_param(barcode1, bars1, barcode2, bars2)
+    min1 = minimum(barcode1[bars1,2])
+    min2 = minimum(barcode2[bars2,2])
+
+    min_total = minimum([min1, min2])
+
+    return min_total
+end
+
+
 # ------------------------------------------------------------------------------------------------------------
 # Additional functions written (not included in github of analogous bars method)
 # ------------------------------------------------------------------------------------------------------------
 function plot_PD(barcode; 
         highlight = [], highlight_color = :deeppink2, cutoff = nothing, 
-        pd_min = nothing, pd_max = nothing, threshold_lw = 3, diagonal_lw = 3,
+        pd_min = nothing, pd_max = nothing, threshold_lw = 2, diagonal_lw = 2,
         kwargs...)
     points = barcode
     
@@ -4725,6 +4790,10 @@ function run_baseline_extension_W_to_VR_at_epsilon0(;
 end
 
 
+"""
+Given a barcode and a vector of bars, find the maximum death parameter
+"""
+find_max_death_param(barcode, bars) = maximum(barcode[bars,2])
 
 function run_baseline_similarity_analogous(;
     VR_P::Dict{String, Any} = Dict{String, Any}(),
@@ -4758,13 +4827,20 @@ function run_baseline_similarity_analogous(;
     analogous_bars_P = Dict()
     analogous_bars_Q = Dict()
     
-    # get Witness persistence W(Q,P)
+    ### Compute the dual Witness persistence W(Q,P)
     D_P_Q = W_PQ["distance_matrix"]
     D_Q_P = collect(transpose(D_P_Q))
-    W_QP = compute_Witness_persistence(D_Q_P, maxdim = dim)
+
+    # only compute the Witness filtration upto the largest death parameter of the selected bars
+    # find maximum parameter
+    barcode_W_PQ = barcode(W_PQ["eirene_output"], dim = 1)
+    param_max = find_max_death_param(barcode_W_PQ, W_PQ_bars)
+    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1, param_max = param_max)
+
+    #W_QP = compute_Witness_persistence(D_Q_P, maxdim = dim)
     
     # find the bar in W(Q,P) that corresponds to W_PQ_bar
-    P_to_Q = apply_Dowker(W_PQ, W_QP, dim = dim)
+    P_to_Q = apply_Dowker_birth(W_PQ, W_QP, dim = dim)
     
     # for each bar in W_PQ_bars, run similarity-centric analogous bars
     for i in W_PQ_bars
@@ -4787,13 +4863,16 @@ function run_baseline_similarity_analogous(;
 end
 
 # original name: run_baseline_similarity_analogous_birthtime_fast
-function run_birthtime_baseline_similarity_analogous(;
+# variation on the "run_baseline_similarity_analogous_param", allowing the user to choose the parameter
+# at which Witness complexes are built 
+function run_baseline_similarity_analogous_param(;
     VR_P::Dict{String, Any} = Dict{String, Any}(),
     D_P::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
     VR_Q::Dict{String, Any} = Dict{String, Any}(),
     D_Q::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
     W_PQ::Dict{Any, Any} = Dict{Any, Any}(),
     W_PQ_bar::Int64 = 0,
+    W_param = Inf,
     dim::Int64 = 1)
 
      ##### check input #####
@@ -4816,51 +4895,95 @@ function run_birthtime_baseline_similarity_analogous(;
         throw(UndefKeywordError(:W_PQ_class))
     end
 
-    ##### 1. apply the extension method between W(P,Q) and VR(P) #####
+
+
+    ############################################################
+    # 1. apply the extension method between W(P,Q) and VR(P)
+    ############################################################
 
     # find the birth time of the selected bar in the Witness barcode
     W_PQ_barcode = barcode(W_PQ["eirene_output"], dim = dim)
-    birth, death = W_PQ_barcode[W_PQ_bar,:]
+    W_death_param = find_max_death_param(W_PQ_barcode, [W_PQ_bar])
 
-    # find class rep "tau" of Witness filtration
-    cycle_W_P = analogous_bars.find_classrep_in_W(W_PQ, bar = W_PQ_bar, dim = dim)
-    
-    ##### apply the extension method between W(P,Q) and VR(P) #####
-    extension_to_VR_P = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_PQ, tau = cycle_W_P, psi = birth, C_VR = VR_P, D_VR = D_P)
+    # if W_param isn't provided then use the default method (do extensions at the parameter immediately prior to death time)
+    if W_param == Inf
+        # find class rep "tau" of Witness filtration and the parameter immediately prior to the death
+        cycle_W_P, psi_W_P =  analogous_bars.find_terminal_class_in_W(W_PQ, bar = W_PQ_bar)
 
-    println("extension to P complete")
+        # Find extension of cycle_W_P to VR(P)
+        extension_P = run_baseline_extension_W_to_VR_at_epsilon0(W = W_PQ, 
+                                                                tau = cycle_W_P, 
+                                                                psi = psi_W_P, 
+                                                                C_VR = VR_P, 
+                                                                D_VR = D_P)
+    else
+        # find class rep "tau" of Witness filtration
+        cycle_W_P = analogous_bars.find_classrep_in_W(W_PQ, bar = W_PQ_bar, dim = dim)
 
-    ##### 2. Compute the Dowker dual
-    D_P_Q = W_PQ["distance_matrix"]
-    D_Q_P = collect(transpose(D_P_Q))
+        # Find extension of cycle_W_P to VR(P). Use the W_param as "psi" parameter
+        extension_P = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_PQ, 
+                                                                                    tau = cycle_W_P, 
+                                                                                    psi = W_param, 
+                                                                                    C_VR = VR_P, 
+                                                                                    D_VR = D_P)
+    end
 
-    # When building the dual Witness filtration, build until the death time of the selected bar
-    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1, param_max = death)
-    
+    println("extension to P complete.")
+
+    ############################################################
+    # 2. Compute the dual Witness complex
+    ############################################################
+    W_QP, P_to_Q = compute_Dowker_dual(W_PQ, param_max = W_death_param)
+
     # find the bar in W(Q,P) that corresponds to W_PQ_bar
-    P_to_Q = apply_Dowker_birth(W_PQ, W_QP, dim = dim)
     W_QP_bar = P_to_Q[W_PQ_bar]
 
-    println("computed Dowker dual")
+    println("computed dual Witness filtration.")
     
-    ##### 3. apply the extension method between W(Q,P) and VR(Q) #####
-    # get W(Q,P) info
-   
-    # extension in VR(Q)
+    ############################################################
+    # 3. apply the extension method between W(Q,P) and VR(Q)
+    ############################################################
 
-    # find class rep "tau" of Witness filtration
-    cycle_W_Q = analogous_bars.find_classrep_in_W(W_QP, bar = W_QP_bar, dim = dim)
-    
-    ##### apply the extension method between W(P,Q) and VR(P) #####
-    # sometimes, when using the birthtime, the extension to Q will take forever, specifically in the `find_all_bar_representations` step.
-    extension_to_VR_Q = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_QP, tau = cycle_W_Q, psi = birth, C_VR = VR_Q, D_VR = D_Q)
+    # if W_param isn't provided then use the default method (do extensions at the parameter immediately prior to death time)
+    if W_param == Inf
+        # find class rep "tau" of Witness filtration and the parameter immediately prior to the death
+        cycle_W_Q, psi_W_Q =  analogous_bars.find_terminal_class_in_W(W_QP, bar = W_QP_bar)
+        # Find extension of cycle_W_Q to VR(Q)
+        extension_Q = run_baseline_extension_W_to_VR_at_epsilon0(W = W_QP, tau = cycle_W_Q, psi = psi_W_Q, C_VR = VR_Q, D_VR = D_Q)
 
-    println("extension to Q complete")
+    else
+        # find class rep "tau" of Witness filtration
+        cycle_W_Q = analogous_bars.find_classrep_in_W(W_QP, bar = W_QP_bar, dim = dim)
+        
+        # Find extension of cycle_W_Q to VR(Q). Use the W_param as "psi" parameter
+        extension_Q = analogous_bars.run_baseline_extension_W_to_VR_at_epsilon0(W = W_QP, 
+                                                                                tau = cycle_W_Q, 
+                                                                                psi = W_param, 
+                                                                                C_VR = VR_Q, 
+                                                                                D_VR = D_Q)
+    end
+
+    println("extension to Q complete.")
     #extension_to_VR_Q = analogous_bars.run_extension_W_to_VR_bar_birthtime(W = W_QP, W_bar = W_QP_bar, C_VR = VR_Q, D_VR = D_Q, dim = dim)
     
-    return extension_to_VR_P, extension_to_VR_Q
+    return extension_P, extension_Q
 end
 
+
+"""
+Given the Witness filtraiton W_PQ, compute the dual Witness filtration W_QP upto a specified parameter.
+Return W_QP and the dictionary encoding the correspondance between bars of W_PQ and W_QP
+"""
+function compute_Dowker_dual(W_PQ; param_max = Inf)
+    D_PQ = W_PQ["distance_matrix"]
+    D_QP = collect(transpose(D_PQ))
+
+    W_QP = compute_Witness_persistence(D_QP, maxdim = 1, param_max = param_max)
+
+    # find the bar in W(Q,P) that corresponds to W_PQ_bar
+    P_to_Q = apply_Dowker_birth(W_PQ, W_QP, dim = 1)
+    return W_QP, P_to_Q
+end
 
 
 """
@@ -4873,7 +4996,7 @@ function run_full_similarity_analogous(;
     VR_Q::Dict{String, Any} = Dict{String, Any}(),
     D_Q::Array{Float64, 2} = Array{Float64}(undef, 0, 0),
     W_PQ::Dict{Any, Any} = Dict{Any, Any}(),
-    W_PQ_bars::Int64 = [],
+    W_PQ_bars = [],
     dim::Int64 = 1)
     
     ##### check input #####
@@ -4899,14 +5022,20 @@ function run_full_similarity_analogous(;
     analogous_P = Dict()
     analogous_Q = Dict()
     
-    ##### Compute Witness persistence W(Q,P) #####
+    ### Compute the dual Witness persistence W(Q,P)
     D_P_Q = W_PQ["distance_matrix"]
     D_Q_P = collect(transpose(D_P_Q))
-    W_QP = compute_Witness_persistence(D_Q_P, maxdim = dim)
-    
+
+    # only compute the Witness filtration upto the largest death parameter of the selected bars
+    # find maximum parameter
+    barcode_W_PQ = barcode(W_PQ["eirene_output"], dim = 1)
+    param_max = find_max_death_param(barcode_W_PQ, W_PQ_bars)
+    W_QP = compute_Witness_persistence(D_Q_P, maxdim = 1, param_max = param_max)
+
     # find the bar in W(Q,P) that corresponds to W_PQ_bar
-    P_to_Q = apply_Dowker(W_PQ, W_QP, dim = dim)
+    P_to_Q = apply_Dowker_birth(W_PQ, W_QP, dim = dim)
     
+    # for each bar in W_PQ_bars, run similarity-centric analogous bars
     for i in W_PQ_bars
         W_PQ_bar = i
         W_QP_bar = P_to_Q[W_PQ_bar]
@@ -4919,9 +5048,7 @@ function run_full_similarity_analogous(;
         
         analogous_P[i] = extension_P
         analogous_Q[i] = extension_Q
-        
     end
-
     return analogous_P, analogous_Q
 end
 
@@ -6133,9 +6260,9 @@ function run_extension_W_to_VR_epsilon0_from_saved_Witness(;
     extension["epsilon_0"] = epsilon_0
     extension["min_epsilon_with_boundary"] = min_epsilon_with_boundary
     # component-wise Ybar representations
-    extension["Ybar_rep_tau"] = Ybar_rep_tau
-    extension["Ybar_rep_short_epsilon0"] = Ybar_rep_short_epsilon0
-    extension["Ybar_rep_short"] = Ybar_rep_short
+    extension["baseline_bar_extensions"] = Ybar_rep_tau
+    extension["offset_bar_extensions_epsilon0"] = Ybar_rep_short_epsilon0
+    extension["offset_bar_extensions"] = Ybar_rep_short
     # exploring results by parameter
     extension["nontrivial_pY"] = nontrivial_pY
     extension["nontrivial_pY_dict"] = nontrivial_pY_dict
@@ -6222,6 +6349,106 @@ function save_classreps(C, classes, filename_prefix)
     
     
 end
+
+
+function select_significant_subcollection(dictionary, selected)
+    new_dict = Dict()
+    for (key, item) in dictionary
+        new_item = [i for i in item if i in selected]
+        if new_item != []
+            new_dict[key] = new_item
+        end
+    end
+    return new_dict
+end
+
+
+##########################################################################################
+# functions for plotting Dowker complexes
+##########################################################################################
+
+function get_1simplices(D_param)
+    n_cols = size(D_param, 2)
+    one_simplices = []
+    for i = 1:n_cols
+        rows = findall(x -> x == 1, D_param[:,i])
+        append!(one_simplices, combinations(rows, 2))
+    end
+    
+    return one_simplices
+end
+
+function get_2simplices(D_param)
+    n_cols = size(D_param,2)
+    two_simplices = []
+    for i = 1:n_cols
+        ones = findall(D_param[:,i])
+        append!(two_simplices, collect(combinations(ones,3)))
+    end
+    
+    return unique(two_simplices)
+end
+
+"""
+    plot_Dowker_complex
+Given a dissimilarity matrix D, compute the Dowker complex at parameter `param`.
+Uses the rows as potential vertex set. Must provide `PC`, the locations of vertex set corresponding to the rows.
+
+### Inputs
+- `D`: Dissimilarity matrix
+- `param`: Parameter. Builds the Dowker complex at this parameter.
+- `PC`: An array of size (n,2), where n is the number of rows of D. 
+        Provides (x,y)-coordinates of vertices corresponding to the  rows of D. 
+
+### Outputs
+- a plot
+"""
+function plot_Dowker_complex(D, param, PC; 
+                             show_2simplex = false, 
+                             show_unborn_vertices = false,
+                             sample_proportion = 1, # if 1, plot all simplices. If less than 1, say 0.5, then plot only 50% of the 2- and 1-simplices
+                             c = "#29A0B1",
+                            kwargs...)
+    n_rows, n_cols = size(D)
+    D_param = D .< param
+    
+    p = plot()
+    
+    # plot 2-simplices
+    if show_2simplex == true
+        two_simplices = get_2simplices(D_param)
+        # sample "sample_proportion"% of simplices to actually plot
+        two_simplices = randsubseq(two_simplices, sample_proportion)
+        for simplex in two_simplices
+            plot!(p, Plots.Shape([(PC[i,1], PC[i,2]) for i in simplex]), 
+                 label="", legend = :false, c = c, alpha = 0.1
+                 )
+        end
+    end
+    
+    # plot 1-simplices
+    one_simplices = get_1simplices(D_param)
+    # sample "sample_proportion"% of simplices to actually plot
+    one_simplices = randsubseq(one_simplices, sample_proportion)
+    for simplex in one_simplices
+        plot!(p, [PC[simplex[1],1], PC[simplex[2],1]], [PC[simplex[1],2], PC[simplex[2],2]], label = "", c = :grey, linewidth = 0.5) 
+    end
+    
+    # plot 0-simplices
+    idx0 = findall(x -> x != 0, vec(sum(D_param, dims = 2)))
+    scatter!(p, PC[idx0,1], PC[idx0, 2]; label = "", frame = :box, ticks = [], c = c, aspect_ratio = :equal, kwargs...)
+    
+    # plot unborn vertices 
+    if show_unborn_vertices == true
+        idx_unborn = findall(x -> x == 0, vec(sum(D_param, dims = 2)))
+        scatter!(p, PC[idx_unborn,1], PC[idx_unborn, 2], label = "",
+                 markershape = :xcross,
+                 markerstrokewidth = 3,
+                 c = c) 
+    end
+    return p
+end
+
 
 
 end
