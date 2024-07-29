@@ -8,6 +8,10 @@ This repository contains code accompanying the following paper: Yoon et al 2024 
 * Due to the large size of data, not all data files are included in this repository. Please contact Iris Yoon (hyoon@wesleyan.edu) for copies of the data. 
 * The analogous cycles code is written in Julia. However, some of the preprocessing steps are done in Python. Each notebook clarifies which language one should use. 
 
+# Quick-start: implementation of analogous cycles
+* Download & install <a href="https://julialang.org/downloads/">Julia</a>. 
+* The "examples" directory contain example notebooks illustrating how to compute analogous cycles. 
+
 
 # Instructions on running Jupyter notebooks
 * Download & install <a href="https://julialang.org/downloads/">Julia</a>. 
