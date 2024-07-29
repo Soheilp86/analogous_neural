@@ -2,16 +2,16 @@
 
 This repository contains code accompanying the following paper: Yoon et al 2024 "Tracking the topology of neural manifolds across populations".
 
-* We recommend running the code on a compute server rather than a laptop.
-* One should first install Julia. 
-* Due to the large size of data, not all data files are included in this repository. Please contact Iris Yoon (hyoon@wesleyan.edu) for copies of the data. 
 
-# Install
-Download & install <a href="https://julialang.org/downloads/">Julia</a>. 
+* One should first download & install <a href="https://julialang.org/downloads/">Julia</a>. 
+* We recommend running the code on a compute server rather than a laptop.
+* Due to the large size of data, not all data files are included in this repository. Please contact Iris Yoon (hyoon@wesleyan.edu) for copies of the data. 
+* The analogous cycles code is written in Julia. However, some of the preprocessing steps are done in Python. Each notebook clarifies which language one should use. 
 
 
 # Instructions on running Jupyter notebooks
-<u>It is important that one activates the virutal environment associated with this project.</u>
+* Download & install <a href="https://julialang.org/downloads/">Julia</a>. 
+* <u>It is important that one activates the virutal environment associated with this project.</u>
 
 ## Using Julia REPL
 * Open Julia REPL
