@@ -73,7 +73,8 @@ export
     convert_classrep,
     save_classreps,
     vector_to_symmetric_matrix,
-    organize_baseline_offset_extensions
+    organize_baseline_offset_extensions,
+    analogous_cycles_significant
 gr()
 
 #############################################################################################
@@ -4859,7 +4860,7 @@ function run_baseline_similarity_analogous(;
         analogous_bars_Q[i] = extension_Q
     end
     
-    return analogous_bars_P, analogous_bars_Q, W_QP
+    return analogous_bars_P, analogous_bars_Q
 end
 
 # original name: run_baseline_similarity_analogous_birthtime_fast
@@ -6362,6 +6363,35 @@ function select_significant_subcollection(dictionary, selected)
     return new_dict
 end
 
+
+function analogous_cycles_significant(analogous_P, analogous_Q; significant_P = [], significant_Q = [])
+    analogous_P_significant = Dict()
+    analogous_Q_significant = Dict()
+    
+    for k in keys(analogous_P)
+        if analogous_P[k]["baseline_bar_extension"] == nothing
+            analogous_P_significant[k] = nothing
+        else
+            if significant_P == []
+                analogous_P_significant[k] = analogous_P[k]["baseline_bar_extension"]
+            else
+                analogous_P_significant[k] = [i for i in significant_P if i in analogous_P[k]["baseline_bar_extension"]]
+            end 
+        end
+
+        if analogous_Q[k]["baseline_bar_extension"] == nothing
+            analogous_Q_significant[k] = nothing
+        else
+            if significant_Q == []
+                analogous_Q_significant[k] = analogous_Q[k]["baseline_bar_extension"]
+            else
+                analogous_Q_significant[k] = [i for i in significant_Q if i in analogous_Q[k]["baseline_bar_extension"]]
+            end 
+        end
+    end
+
+    return analogous_P_significant, analogous_Q_significant
+end
 
 ##########################################################################################
 # functions for plotting Dowker complexes
