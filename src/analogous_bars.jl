@@ -3082,10 +3082,7 @@ function find_epsilon0_Fbar_representation_tau_WtoVR_large_limit(
                 
                 # Error handling: return error if there are no F-bar representation of τ
                 print("Error!!! Cannot find F-bar representations of τ with limited iterations " * string(count_lim))
-                return nothing, nothing
-
-    
-                
+                return nothing, nothing  
             end
         end
 
