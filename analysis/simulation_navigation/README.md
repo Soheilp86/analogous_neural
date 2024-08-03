@@ -3,7 +3,7 @@
 This directory contains code for running analogous cycles on simulated navigation system (HD, grid, conjunctive cells)
 
 ### Repository structure
-* `simulation_navigation`
+* `simulation_code`
     * Contains code for simulating the HD, grid, and conjunctive cells. 
     * References: "Toroidal topology of population activity in grid cells" (Gardner et al, 2022). The specific simulation model is based on "Recurrent inhibitory circuitry as a mechanism for grid formulation" (Couey et al, 2013).
     * In particular, see notebook `simulate_grid_HD_conj_cells.ipynb`. The code is in Python. 
