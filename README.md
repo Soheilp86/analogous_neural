@@ -1,12 +1,13 @@
 # Analogous cycles 
 
-This repository contains code accompanying the following paper: Yoon et al 2024 "Tracking the topology of neural manifolds across populations".
+This repository contains code accompanying the following paper: Yoon et al 2024 "Tracking the topology of neural manifolds across populations". 
 
 
 * One should first download & install <a href="https://julialang.org/downloads/">Julia</a>. The code has been tested on Julia version 1.10.4.
 * We recommend running the code on a compute server rather than a laptop.
 * Due to the large size of data, not all data files are included in this repository. Please contact Iris Yoon (hyoon@wesleyan.edu) for copies of the data. 
 * The analogous cycles code is written in Julia. However, some of the preprocessing steps are done in Python. Each notebook clarifies which language one should use. 
+* We use the phrase `analogous cycles` and `analogous bars` interchangably. 
 
 # Quick-start: implementation of analogous cycles
 * Download & install <a href="https://julialang.org/downloads/">Julia</a>. 
