@@ -44,3 +44,8 @@ include("src/analogous_bars.jl")
 using .Eirene_var
 using .analogous_bars
 ```
+
+# Running the code on the provided datasets
+* See the`analysis` directory.
+* We recommend running the code in the `experimental_visual` or `simulation_navigation` directories, as the computation can take a long time for the dataset in `simulation_visual`.
+* For `simulation visual`, we recommend running the code on a server. 
